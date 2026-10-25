@@ -1,0 +1,384 @@
+diff --git a/Shared/Design/Theme.swift b/ios/Typle/Design/Theme.swift
+index ba5b034..ad2b88e 100644
+--- a/Shared/Design/Theme.swift
++++ b/ios/Typle/Design/Theme.swift
+@@ -1,22 +1,12 @@
+ import SwiftUI
+-#if canImport(UIKit)
+ import UIKit
+-#else
+-import AppKit
+-#endif
+ 
+ /// The web app's design tokens (src/app/globals.css, shadcn's neutral theme), as colours that follow light and dark.
+ enum Palette {
+   private static func color(_ light: UInt32, _ dark: UInt32, darkAlpha: CGFloat = 1) -> Color {
+-    #if canImport(UIKit)
+     Color(UIColor { traits in
+       traits.userInterfaceStyle == .dark ? UIColor(hex: dark, alpha: darkAlpha) : UIColor(hex: light)
+     })
+-    #else
+-    Color(NSColor(name: nil) { appearance in
+-      appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? NSColor(hex: dark, alpha: darkAlpha) : NSColor(hex: light)
+-    })
+-    #endif
+   }
+ 
+   /// The top bar and the sidebar.
+@@ -46,19 +36,11 @@ enum Palette {
+   static let pending = color(0xA1A1A1, 0x737373)
+ }
+ 
+-#if canImport(UIKit)
+ extension UIColor {
+   convenience init(hex: UInt32, alpha: CGFloat = 1) {
+     self.init(red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255, blue: CGFloat(hex & 0xFF) / 255, alpha: alpha)
+   }
+ }
+-#else
+-extension NSColor {
+-  convenience init(hex: UInt32, alpha: CGFloat = 1) {
+-    self.init(srgbRed: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255, blue: CGFloat(hex & 0xFF) / 255, alpha: alpha)
+-  }
+-}
+-#endif
+ 
+ /// Corner radii of `--radius` (10px) and its steps.
+ enum Radius {
+@@ -98,43 +80,12 @@ struct Hairline: View {
+   var body: some View { Rectangle().fill(Palette.border).frame(height: 1) }
+ }
+ 
+-// MARK: The iPad and the Mac
++// MARK: Text fields
+ 
+ extension View {
+   /// Text typed as it is: no capitals, corrections or the text field's own frame, which the parts draw themselves.
+   func plainInput() -> some View {
+-    #if os(iOS)
+-    return textFieldStyle(.plain).textInputAutocapitalization(.never).autocorrectionDisabled()
+-    #else
+-    return textFieldStyle(.plain).autocorrectionDisabled()
+-    #endif
+-  }
+-
+-  /// A menu that shows its label as it is drawn, as on the iPad. The Mac's menu button would draw its own frame.
+-  func plainMenu() -> some View {
+-    #if os(macOS)
+-    return menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+-    #else
+-    return self
+-    #endif
+-  }
+-
+-  /// A picker inside a menu, whose choices are the menu's items as on the iPad, not a submenu.
+-  func menuPicker() -> some View {
+-    #if os(macOS)
+-    return pickerStyle(.inline).labelsHidden()
+-    #else
+-    return self
+-    #endif
+-  }
+-
+-  /// A sheet's size on the Mac, where a sheet is as large as its content; the iPad's sheets size themselves.
+-  func sheetSize(width: CGFloat, height: CGFloat? = nil) -> some View {
+-    #if os(macOS)
+-    return frame(width: width, height: height)
+-    #else
+-    return self
+-    #endif
++    textFieldStyle(.plain).textInputAutocapitalization(.never).autocorrectionDisabled()
+   }
+ }
+ 
+diff --git a/Shared/Devices/DevicesView.swift b/ios/Typle/Devices/DevicesView.swift
+index 45dbbce..386bbb6 100644
+--- a/Shared/Devices/DevicesView.swift
++++ b/ios/Typle/Devices/DevicesView.swift
+@@ -79,7 +79,6 @@ struct DevicesView: View {
+             .background(Palette.card, in: RoundedRectangle(cornerRadius: Radius.md))
+             .outlined(radius: Radius.md)
+         }
+-        .plainMenu()
+         .accessibilityLabel(L("devices.current.changeLabel", chosen.map { Format.device($0) } ?? L("devices.choice.notSelected")))
+         Button { app.navigate(.practice) } label: { Label(L("devices.current.practice"), systemImage: "keyboard") }
+           .buttonStyle(.typle(.outline, size: .lg))
+@@ -202,7 +201,6 @@ struct DeviceEditor: View {
+     }
+     .padding(24)
+     .background(Palette.card)
+-    .sheetSize(width: 480)
+     .presentationDetents([.medium])
+     .onAppear {
+       guard !loaded else { return }
+diff --git a/Shared/Lists/ListEditorView.swift b/ios/Typle/Lists/ListEditorView.swift
+index c533045..46eaaea 100644
+--- a/Shared/Lists/ListEditorView.swift
++++ b/ios/Typle/Lists/ListEditorView.swift
+@@ -218,7 +218,6 @@ struct ListEditorView: View {
+         } label: {
+           Image(systemName: "ellipsis").font(.system(size: 14)).frame(width: 32, height: 36).contentShape(Rectangle())
+         }
+-        .plainMenu()
+         .foregroundStyle(Palette.foreground)
+         .accessibilityLabel(L("wordLists.editor.wordActions", index + 1))
+         Button { remove(index) } label: { Image(systemName: "trash").font(.system(size: 14)) }
+@@ -372,7 +371,7 @@ struct ListEditorView: View {
+     let list = WordList(id: original?.id ?? randomId(), name: name,
+                         words: kept.map { Word(display: $0.word.display, input: $0.word.input.isEmpty ? $0.word.display : $0.word.input, annotation: $0.word.annotation) },
+                         records: original?.records ?? [], createdAt: original?.createdAt ?? isoString(Date()),
+-                        // The iPad and Mac editors do not edit these yet, so they stay as saved.
++                        // The iPad editor does not edit these yet, so they stay as saved.
+                         category: original?.category, tags: original?.tags, group: original?.group, levels: original?.levels)
+     saving = true
+     Task {
+diff --git a/Shared/Lists/ListsView.swift b/ios/Typle/Lists/ListsView.swift
+index 5d3960b..f8d81be 100644
+--- a/Shared/Lists/ListsView.swift
++++ b/ios/Typle/Lists/ListsView.swift
+@@ -35,7 +35,6 @@ struct ListsView: View {
+             Picker(L("wordLists.order.label"), selection: $order) {
+               ForEach(ListOrder.allCases, id: \.self) { order in Text(L("wordLists.order.\(order.rawValue)")).tag(order) }
+             }
+-            .menuPicker()
+           } label: {
+             HStack(spacing: 6) {
+               Text(L("wordLists.order.label")).foregroundStyle(Palette.mutedForeground)
+@@ -48,7 +47,6 @@ struct ListsView: View {
+             .background(Palette.card, in: RoundedRectangle(cornerRadius: Radius.md))
+             .outlined(radius: Radius.md, color: Palette.input)
+           }
+-          .plainMenu()
+           Spacer()
+           Text(query.isEmpty ? L("wordLists.manager.count", all.count) : L("wordLists.manager.countFiltered", items.count, all.count))
+             .font(.system(size: 14)).foregroundStyle(Palette.mutedForeground)
+@@ -121,7 +119,6 @@ struct ListsView: View {
+       Menu { menu(item.list) } label: {
+         Image(systemName: "ellipsis").font(.system(size: 15)).frame(width: 36, height: 36).contentShape(Rectangle())
+       }
+-      .plainMenu()
+       .foregroundStyle(Palette.foreground)
+       .accessibilityLabel(L("wordLists.row.moreFor", item.list.name))
+     }
+@@ -136,14 +133,9 @@ struct ListsView: View {
+     Button { app.showRankings(listId: list.id) } label: { Label(L("wordLists.row.rankings"), systemImage: "trophy") }
+     Button { app.navigate(.records) } label: { Label(L("wordLists.row.records"), systemImage: "clock.arrow.circlepath") }
+     Divider()
+-    #if os(macOS)
+-    // The Mac saves the file where the reader chooses, as the web app downloads it.
+-    Button { CsvExport(list: list).save() } label: { Label(L("wordLists.row.export"), systemImage: "square.and.arrow.down") }
+-    #else
+     ShareLink(item: CsvExport(list: list), preview: SharePreview(list.name)) {
+       Label(L("wordLists.row.export"), systemImage: "square.and.arrow.up")
+     }
+-    #endif
+     Button { duplicate(list) } label: { Label(L("wordLists.row.copy"), systemImage: "plus.square.on.square") }
+       .disabled(app.lists.count >= maxLists)
+     Divider()
+diff --git a/Shared/Practice/PracticeParts.swift b/ios/Typle/Practice/PracticeParts.swift
+index 64b2ae8..d519bab 100644
+--- a/Shared/Practice/PracticeParts.swift
++++ b/ios/Typle/Practice/PracticeParts.swift
+@@ -177,7 +177,6 @@ struct DeviceMenu: View {
+       .background(Palette.card, in: Capsule())
+       .overlay(Capsule().strokeBorder(Palette.border))
+     }
+-    .plainMenu()
+     .disabled(locked)
+     .accessibilityLabel(L("practice.device.label", current.map { Format.device($0) } ?? L("devices.none")))
+   }
+@@ -257,7 +256,6 @@ struct ListPickerSheet: View {
+     .padding(24)
+     .frame(maxWidth: 448)
+     .background(Palette.card)
+-    .sheetSize(width: 448, height: 560)
+     .presentationDetents([.medium, .large])
+   }
+ }
+diff --git a/Shared/Records/RankingsView.swift b/ios/Typle/Records/RankingsView.swift
+index d7505ae..4b5dae1 100644
+--- a/Shared/Records/RankingsView.swift
++++ b/ios/Typle/Records/RankingsView.swift
+@@ -23,13 +23,11 @@ struct RankingsView: View {
+               Text(option.value == noDevice ? L("format.noDeviceRecorded") : Format.device(option.device)).tag(String?.some(option.value))
+             }
+           }
+-          .menuPicker()
+         } label: {
+           FilterLabel(name: L("rankings.filter.device"), value: device.map { value in
+             value == noDevice ? L("format.noDeviceRecorded") : Format.device(devices.first { $0.value == value }?.device)
+           } ?? L("records.filterMenu.all"))
+         }
+-        .plainMenu()
+         SegmentedPills(options: [(RankOrder.accuracy, L("rankings.order.accuracy")), (RankOrder.speed, L("rankings.order.speed"))], selection: $order)
+         HStack(spacing: 4) {
+           Image(systemName: "info.circle").font(.system(size: 11))
+@@ -59,7 +57,6 @@ struct RankingsView: View {
+           Picker(L("rankings.list.sortLabel", ""), selection: $sort) {
+             ForEach(ListSort.allCases, id: \.self) { sort in Text(L("rankings.list.sorts.\(sort.rawValue)")).tag(sort) }
+           }
+-          .menuPicker()
+         } label: {
+           HStack(spacing: 4) {
+             Text(L("rankings.list.sorts.\(sort.rawValue)"))
+@@ -67,7 +64,6 @@ struct RankingsView: View {
+           }
+           .font(.system(size: 13)).foregroundStyle(Palette.mutedForeground)
+         }
+-        .plainMenu()
+       }
+       .padding(12)
+       Hairline()
+diff --git a/Shared/Records/RecordsView.swift b/ios/Typle/Records/RecordsView.swift
+index 05b2c14..a0ac977 100644
+--- a/Shared/Records/RecordsView.swift
++++ b/ios/Typle/Records/RecordsView.swift
+@@ -31,11 +31,9 @@ struct RecordsView: View {
+                 Text(L("records.filterMenu.option", list.name, list.records.count)).tag(String?.some(list.id))
+               }
+             }
+-            .menuPicker()
+           } label: {
+             FilterLabel(name: L("records.filter.list"), value: listFilter.flatMap { id in app.lists.first { $0.id == id }?.name } ?? L("records.filterMenu.all"))
+           }
+-          .plainMenu()
+           Menu {
+             Picker(L("records.filter.device"), selection: $deviceFilter) {
+               Text(L("records.filter.allDevices")).tag(String?.none)
+@@ -44,13 +42,11 @@ struct RecordsView: View {
+                   .tag(String?.some(option.value))
+               }
+             }
+-            .menuPicker()
+           } label: {
+             FilterLabel(name: L("records.filter.device"), value: deviceFilter.map { value in
+               value == noDevice ? L("format.noDeviceRecorded") : Format.device(options.first { $0.value == value }?.device)
+             } ?? L("records.filterMenu.all"))
+           }
+-          .plainMenu()
+           if listFilter != nil || deviceFilter != nil {
+             Button(L("records.filter.clear")) { listFilter = nil; deviceFilter = nil }.buttonStyle(.typle(.ghost))
+           }
+diff --git a/Shared/Settings/GeneralSettingsView.swift b/ios/Typle/Settings/GeneralSettingsView.swift
+index cfcbbfe..4abb805 100644
+--- a/Shared/Settings/GeneralSettingsView.swift
++++ b/ios/Typle/Settings/GeneralSettingsView.swift
+@@ -49,9 +49,7 @@ struct GeneralSettingsView: View {
+         VStack(alignment: .leading, spacing: 12) {
+           labelled(L("settings.serverURL")) {
+             TextField(AppModel.defaultServerURL, text: $serverURL)
+-              #if os(iOS)
+               .keyboardType(.URL)
+-              #endif
+               .plainInput()
+               .font(.system(size: 14))
+               .padding(.horizontal, 12).frame(height: 40)
+diff --git a/Shared/Storage/Keychain.swift b/ios/Typle/Storage/Keychain.swift
+index dc57e16..991bd43 100644
+--- a/Shared/Storage/Keychain.swift
++++ b/ios/Typle/Storage/Keychain.swift
+@@ -1,7 +1,7 @@
+ import Foundation
+ import Security
+ 
+-/// The token the app signs in to the account with, kept in the Keychain on this iPad or Mac only.
++/// The token the app signs in to the account with, kept in the Keychain on this iPad only.
+ enum Keychain {
+   private static let service = "typle.account-token"
+   private static let account = "github"
+@@ -27,9 +27,7 @@ enum Keychain {
+     guard let token, !token.isEmpty else { return true }
+     var item = query(service)
+     item[kSecValueData as String] = Data(token.utf8)
+-    #if os(iOS)
+     item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+-    #endif
+     return SecItemAdd(item as CFDictionary, nil) == errSecSuccess
+   }
+ 
+diff --git a/Shared/Storage/WorkspaceStore.swift b/ios/Typle/Storage/WorkspaceStore.swift
+index d6430bc..7961496 100644
+--- a/Shared/Storage/WorkspaceStore.swift
++++ b/ios/Typle/Storage/WorkspaceStore.swift
+@@ -56,11 +56,7 @@ final class LocalWorkspaceStore: WorkspaceStore {
+     let data = try encodeWorkspaceFile(next)
+     do {
+       try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+-      #if os(iOS)
+       try data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+-      #else
+-      try data.write(to: url, options: .atomic)
+-      #endif
+     } catch {
+       throw TypleError("localWriteFailed")
+     }
+diff --git a/Shared/Support/Localization.swift b/ios/Typle/Support/Localization.swift
+index 1040a85..ef2c748 100644
+--- a/Shared/Support/Localization.swift
++++ b/ios/Typle/Support/Localization.swift
+@@ -31,14 +31,8 @@ func L(_ key: String, _ arguments: CVarArg...) -> String {
+   return arguments.isEmpty ? format : String(format: format, locale: Localization.locale, arguments: arguments)
+ }
+ 
+-/// The text for a key, or the key itself when there is none. The Mac's Mac.strings (Typle/Resources) holds the Mac's own
+-/// text, such as 「この Mac」, for the keys whose iPad text names the iPad; every other key is the iPad's.
++/// The text for a key, or the key itself when there is none.
+ private func localizedText(_ key: String) -> String {
+-  #if os(macOS)
+-  let missing = "\u{1}"
+-  let mac = Localization.bundle.localizedString(forKey: key, value: missing, table: "Mac")
+-  if mac != missing { return mac }
+-  #endif
+   return Localization.bundle.localizedString(forKey: key, value: nil, table: nil)
+ }
+ 
+diff --git a/Shared/Support/Platform.swift b/ios/Typle/Support/Platform.swift
+index 9e51a5b..99a318f 100644
+--- a/Shared/Support/Platform.swift
++++ b/ios/Typle/Support/Platform.swift
+@@ -1,18 +1,11 @@
+ import Foundation
+ 
+-/// What differs between the Mac app and the iPad app in Sparklingstadt/typle-r, whose sources Shared/ began as.
++/// What the iPad app names itself by. The Mac app, which began as these sources, is Sparklingstadt/typle-m.
+ enum Platform {
+-  #if os(macOS)
+   /// The signin's `client` for the app's own login (docs/api.md).
+-  static let loginClient = "macos"
+-  /// Names the data in this Mac's file, like `typle-r:device:<accountId>` in the web app.
+-  static let localAccountId = "mac:local"
+-  static let resumeIcon = "cursorarrow.click"
+-  static let demoDeviceName = "MacBook Air（JIS）"
+-  #else
+   static let loginClient = "ipad"
++  /// Names the data in this iPad's file, like `typle-r:device:<accountId>` in the web app.
+   static let localAccountId = "ipad:local"
+   static let resumeIcon = "hand.tap"
+   static let demoDeviceName = "iPad＋Magic Keyboard"
+-  #endif
+ }
+diff --git a/Shared/TypleApp.swift b/ios/Typle/TypleApp.swift
+index bcf37b1..f4e48d8 100644
+--- a/Shared/TypleApp.swift
++++ b/ios/Typle/TypleApp.swift
+@@ -10,20 +10,7 @@ struct TypleApp: App {
+       RootView()
+         .environment(app)
+         .task { await app.reload() }
+-        #if os(macOS)
+-        // The smallest window the pages are laid out for: the top bar's parts and the practice card fit in it.
+-        .frame(minWidth: 800, minHeight: 560)
+-        #endif
+-        #if os(macOS) && DEBUG
+-        // Screenshots: `-TypleSnapshot <file>` saves the window and quits.
+-        .task { await MacSnapshot.takeIfAsked() }
+-        #endif
+     }
+-    #if os(macOS)
+-    // As wide as the web app's sidebar layout, at the height of the web captures.
+-    .defaultSize(width: 1280, height: 820)
+-    .commands { TypleCommands(app: app) }
+-    #endif
+   }
+ }
+ 

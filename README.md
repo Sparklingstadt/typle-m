@@ -4,7 +4,7 @@ Typle の macOS 版です。Web 版と同じ画面・判定・記録・ベスト
 
 Web 版・iPad 版・バックエンドは [Sparklingstadt/typle-r](https://github.com/Sparklingstadt/typle-r) に、Android 版は [Sparklingstadt/typle-a](https://github.com/Sparklingstadt/typle-a)、Windows 版は [Sparklingstadt/typle-w](https://github.com/Sparklingstadt/typle-w) にあります。Mac 版はもともと typle-r の `macos/` にあり、iPad 版（`ios/Typle`）の SwiftUI のコードと共通の規則（`ios/TypleCore`）をそのまま使っていました。typle-r v0.88.0 でこのリポジトリに分け、そのとき（typle-r v0.86.1）の iPad 版のコードを `Shared/`、共通の規則を `TypleCore/` に写しました。履歴は typle-r の `macos/`・`ios/Typle`・`ios/TypleCore` の履歴を引き継いでいます（コミットの `(Sparklingstadt/typle-r#123)` は typle-r の PR です）。
 
-これからは iPad 版で直したことは自動では入りません。必要なものは、このリポジトリで同じように直します。コードのコメントにある `src/…` は typle-r の Web 版のファイルです。
+これからは iPad 版で直したことは自動では入りません。必要なものは、このリポジトリで同じように直します。`TYPLE_R` で手元の typle-r を指定すると、[共有 Swift の差分確認](docs/shared-swift.md)で取り込みの確認が必要な変更を表示できます。コードのコメントにある `src/…` は typle-r の Web 版のファイルです。
 
 ## 必要なもの
 
@@ -83,18 +83,22 @@ Web 版と同じ GitHub OAuth App でログインし、Cookie の代わりにト
 | `Typle/MacCommands.swift` | メニューバー、CSV の保存、スクリーンショット（Debug ビルドだけ） |
 | `Typle/Resources/` | アイコンと、`Shared/` の文言のうち「iPad」「タップ」を含むものの Mac 版（`Mac.strings`）。ほかの文言は `Shared/Resources` の `Localizable.strings` を使います |
 | `project.yml` | XcodeGen の設定 |
-| `tests/` | 文言の確認（Node.js） |
+| `scripts/check-shared-swift.cjs` | typle-r の iPad 版との共有 Swift の差分確認（読み取りのみ） |
+| `tests/` | 文言と差分検証の回帰テスト（Node.js） |
 
 ## 確認
 
 CI のワークフローはありません。ビルドとサンプルデータ（`-TypleDemo YES`）での確認は手元で行います。
 
 ```sh
-node --test tests/            # 文言（Node.js 20 以上）
+node --test tests/            # 文言と差分検証の回帰テスト（Node.js 20 以上）
+TYPLE_R=../typle-r node scripts/check-shared-swift.cjs  # iPad 版との共有 Swift の差分
 cd TypleCore && swift test    # 共通の規則
 ```
 
 - `tests/strings.test.cjs` が、「iPad」「タップ」を含む文言すべてに Mac 版があり、プレースホルダーがそろっているか、コードが使う文言が日本語・英語の両方にあるかを確かめます。
+- `TYPLE_R=/path/to/typle-r node --test tests/` なら、通常のテストに iPad 版との照合も含めます。指定しないときは、その照合だけをスキップし、回帰テストと文言のテストは実行します。`tests/` のディレクトリ指定を受け付けない Node.js（24 など）では、`node --test tests/*.test.cjs` とします。
+- 差分確認は手元のファイルを読み、既知の Mac 専用差分だけを除外して、追加・削除を含む Swift の差分を表示します。終了コードは差分なしが `0`、要確認が `1`、設定・実行エラーが `2` です。対応ファイルと取り込みの手順は [docs/shared-swift.md](docs/shared-swift.md) にあります。
 - スクリーンショットは、Debug ビルドを `-TypleDemo YES -TypleSnapshot <ファイル>` で起動すると、ウインドウを PNG で保存して終わります。アプリは App Sandbox の中で動くため、保存先は `~/Library/Containers/io.github.sparklingstadt.typle/Data/tmp/` の下にします。
 
 ## 範囲外
