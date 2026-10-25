@@ -2,7 +2,7 @@
 
 Typle の macOS 版です。Web 版と同じ画面・判定・記録・ベストの規則で、Mac のキーボードで練習できます。アカウントの保存先は、Web 版・iPad 版・Android 版・Windows 版と同じ Go のバックエンド（本番の `/api/auth/*`・`/api/workspace`）です。
 
-Web 版・iPad 版・Android 版・Windows 版・バックエンドは [Sparklingstadt/typle-r](https://github.com/Sparklingstadt/typle-r) にあります。Mac 版はもともと typle-r の `macos/` にあり、iPad 版（`ios/Typle`）の SwiftUI のコードと共通の規則（`ios/TypleCore`）をそのまま使っていました。typle-r v0.87.0 でこのリポジトリに分け、そのとき（typle-r v0.86.1）の iPad 版のコードを `Shared/`、共通の規則を `TypleCore/` に写しました。履歴は typle-r の `macos/`・`ios/Typle`・`ios/TypleCore` の履歴を引き継いでいます（コミットの `(Sparklingstadt/typle-r#123)` は typle-r の PR です）。
+Web 版・iPad 版・Android 版・Windows 版・バックエンドは [Sparklingstadt/typle-r](https://github.com/Sparklingstadt/typle-r) にあります。Mac 版はもともと typle-r の `macos/` にあり、iPad 版（`ios/Typle`）の SwiftUI のコードと共通の規則（`ios/TypleCore`）をそのまま使っていました。typle-r v0.88.0 でこのリポジトリに分け、そのとき（typle-r v0.86.1）の iPad 版のコードを `Shared/`、共通の規則を `TypleCore/` に写しました。履歴は typle-r の `macos/`・`ios/Typle`・`ios/TypleCore` の履歴を引き継いでいます（コミットの `(Sparklingstadt/typle-r#123)` は typle-r の PR です）。
 
 これからは iPad 版で直したことは自動では入りません。必要なものは、このリポジトリで同じように直します。コードのコメントにある `src/…` は typle-r の Web 版のファイルです。
 
