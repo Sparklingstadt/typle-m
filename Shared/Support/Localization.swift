@@ -31,7 +31,7 @@ func L(_ key: String, _ arguments: CVarArg...) -> String {
   return arguments.isEmpty ? format : String(format: format, locale: Localization.locale, arguments: arguments)
 }
 
-/// The text for a key, or the key itself when there is none. The Mac app's Mac.strings (macos/) holds the Mac's own
+/// The text for a key, or the key itself when there is none. The Mac's Mac.strings (Typle/Resources) holds the Mac's own
 /// text, such as 「この Mac」, for the keys whose iPad text names the iPad; every other key is the iPad's.
 private func localizedText(_ key: String) -> String {
   #if os(macOS)

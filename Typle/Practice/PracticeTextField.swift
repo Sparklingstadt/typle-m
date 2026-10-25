@@ -1,7 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// The practice input on the Mac, in place of the iPad's UITextField (ios/Typle/Practice/PracticeTextField.swift).
+/// The practice input on the Mac, in place of the iPad's UITextField (ios/Typle/Practice/PracticeTextField.swift
+/// in Sparklingstadt/typle-r).
 /// Text being composed by an input method (romaji, pinyin) is shown but never judged: only text committed with no
 /// marked text reaches `onCommit`, like compositionstart/compositionend in the web app.
 struct PracticeTextField: NSViewRepresentable {

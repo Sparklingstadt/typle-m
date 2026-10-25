@@ -1,6 +1,6 @@
 import Foundation
 
-/// What differs between the iPad app and the Mac app (macos/), which is built from the same sources.
+/// What differs between the Mac app and the iPad app in Sparklingstadt/typle-r, whose sources Shared/ began as.
 enum Platform {
   #if os(macOS)
   /// The signin's `client` for the app's own login (docs/api.md).
