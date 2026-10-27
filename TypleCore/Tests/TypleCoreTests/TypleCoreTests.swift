@@ -179,8 +179,8 @@ final class WordListTests: XCTestCase {
     let copy = try duplicateList(saved, id: "x", copyId: "z", suffix: { _ in "（コピー）" }).copy
     XCTAssertEqual(copy.tags, ["Go"])
     XCTAssertTrue(matchesQuery(saved[0], "語学"))
-    // The initial lists the sparklingstadt account did not make itself or keep whole beside their parts are labeled.
-    XCTAssertEqual(initialLists().filter { $0.category != nil && !($0.tags ?? []).isEmpty }.count, 54)
+    // Every initial list is labeled (since typle-r v0.101.1).
+    XCTAssertEqual(initialLists().filter { $0.category != nil && !($0.tags ?? []).isEmpty }.count, 67)
     XCTAssertThrowsError(try validateLists([WordList(id: "a", name: "A", words: words, createdAt: "x", tags: [String(repeating: "t", count: 51)])]))
   }
 
